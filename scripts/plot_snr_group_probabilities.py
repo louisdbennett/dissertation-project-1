@@ -23,6 +23,7 @@ def format_label(label: str) -> str:
 def plot_group_mean_probabilities(group_column: str = "proj") -> Path:
     summary = pd.read_csv(SUMMARY_PATH)
     group_label = AXIS_LABELS.get(group_column, group_column)
+    title_group_label = group_label.lower()
 
     value_cols = [col for col in summary.columns if col != group_column]
     order = summary[value_cols].mean().sort_values(ascending=False).index.tolist()
@@ -44,7 +45,7 @@ def plot_group_mean_probabilities(group_column: str = "proj") -> Path:
         ax.set_xlabel("Mean predicted probability")
 
     axes[0].set_ylabel("Supertype")
-    fig.suptitle(f"Mean supertype probabilities by {group_label}", y=1.02)
+    fig.suptitle(f"Mean supertype probabilities by {title_group_label}", y=1.02)
     fig.tight_layout()
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)

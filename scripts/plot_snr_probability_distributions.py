@@ -7,7 +7,7 @@ import pandas as pd
 
 
 INPUT_PATH = Path("analysis_outputs/snr_classification/full_probabilities.csv")
-OUTPUT_PATH = Path("analysis_outputs/snr_classification/proj_probability_distribution.png")
+OUTPUT_DIR = Path("analysis_outputs/snr_classification")
 DEFAULT_PROBABILITY_COLUMN = "0036 L2/3 IT ENT Glut_4"
 DEFAULT_GROUP_COLUMN = "proj"
 GROUP_ORDER = ["orb", "rsp_orb", "rsp"]
@@ -24,12 +24,18 @@ def format_label(label: str) -> str:
     return clean.replace("_", " ")
 
 
+def make_output_path(probability_column: str) -> Path:
+    safe_name = probability_column.lower().replace("/", "_").replace(" ", "_")
+    return OUTPUT_DIR / f"{safe_name}_probability_distribution.png"
+
+
 def plot_probability_distribution(
     probability_column: str = DEFAULT_PROBABILITY_COLUMN,
     group_column: str = DEFAULT_GROUP_COLUMN,
 ) -> Path:
     """Plot per-neuron transferred probabilities by SNR group."""
     df = pd.read_csv(INPUT_PATH)
+    title_group_label = AXIS_LABELS.get(group_column, group_column).lower()
     group_order = [group for group in GROUP_ORDER if group in df[group_column].unique()]
     if not group_order:
         group_order = df[group_column].dropna().unique().tolist()
@@ -67,13 +73,13 @@ def plot_probability_distribution(
     ax.set_ylim(0, 1)
     ax.set_ylabel("Predicted probability")
     ax.set_xlabel(AXIS_LABELS.get(group_column, group_column))
-    ax.set_title(f"{format_label(probability_column)} probability by {AXIS_LABELS.get(group_column, group_column)}")
+    ax.set_title(f"{format_label(probability_column)} probability by {title_group_label}")
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    output_path = make_output_path(probability_column)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
-    fig.savefig(OUTPUT_PATH, dpi=200, bbox_inches="tight")
+    fig.savefig(output_path, dpi=200, bbox_inches="tight")
     plt.close(fig)
-    return OUTPUT_PATH
 
 
 if __name__ == "__main__":
@@ -82,9 +88,7 @@ if __name__ == "__main__":
     parser.add_argument("--group-column", default=DEFAULT_GROUP_COLUMN)
     args = parser.parse_args()
 
-    print(
-        plot_probability_distribution(
-            probability_column=args.probability_column,
-            group_column=args.group_column,
-        )
+    plot_probability_distribution(
+        probability_column=args.probability_column,
+        group_column=args.group_column,
     )
