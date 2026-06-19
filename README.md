@@ -30,7 +30,7 @@ Add the raw data files to the root of the repository and run the scripts in the 
 ### 4. Run the MERFISH model on the SNR data
 
 ```bash
-./.venv/bin/python scripts/snr_classification_by_group.py
+./.venv/bin/python scripts/snr_classification_by_group.py --model xgboost --n-estimators 500 --max-depth 4 --learning-rate 0.1
 ```
 
 ### 5. Test whether the predicted supertypes differ by SNR group
@@ -44,4 +44,5 @@ Add the raw data files to the root of the repository and run the scripts in the 
 ```bash
 ./.venv/bin/python scripts/plot_snr_group_probabilities.py
 ./.venv/bin/python scripts/plot_brain_coverage.py --z-filtered --show-grouped-supertypes
+./.venv/bin/python scripts/plot_merfish_xgboost.py
 ```
