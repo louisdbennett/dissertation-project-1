@@ -1,0 +1,19 @@
+.DS_Store
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Local-only datasets
+ec_obj_imputed_log2.h5ad
+master_detailed_comment.csv
+analysis_tables/*.csv
+
+# Generated analysis outputs
+analysis_outputs/
+
+# Common local editor or OS files
+*.swp
+*.tmp
+
+docs/

@@ -1,0 +1,37 @@
+FRP = Frontal Pole (Cerebral Cortex)
+SS = Somatosensory Areas
+VIS = Visual Areas
+VISpor = Postrhinal Areas
+RSP = Retrosplenial Areas
+
+PTLp = Posterior parietal association areas
+ORB = Orbital Area
+MO = Somatomotor Area
+AUD = Auditory Areas
+ACA = Anterior cingulate area
+
+PL = Prelimbic area
+ILA = Infralimbic area
+VISC = Visceral Area
+
+AI = Agranular insular area
+GU = Gustatory areas
+TEa = Temporal association areas
+
+PERI = Perirhinal area
+ECT = Ectorhinal area
+OLF = Olfactory areas
+
+PAR = Parasubiculum
+POST = Postsubiculum
+PRE = Presubiculum
+SUB = Subiculum
+
+HIP = Hippocampal region
+CLA = Claustrum
+EP = Endopiriform nucleus
+
+AMY = Amygdala 
+
+dStr = dorsal Striatum
+vStr = ventral Striatum
