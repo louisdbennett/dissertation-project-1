@@ -48,7 +48,7 @@ MODEL_GRIDS = {
         "weights": ["uniform", "distance"],
     },
     "xgboost": {
-        "n_estimators": [100, 300, 500],
+        "n_estimators": [300, 500, 800],
         "max_depth": [2, 3, 4],
         "learning_rate": [0.03, 0.1],
     },
