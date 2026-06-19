@@ -18,15 +18,16 @@ DEFAULT_PARAMS = {
 }
 N_GRID_POINTS = 80
 N_PD_ROWS = 2000
+
 FEATURE_LABELS = {
     "x_ccf": "x",
     "y_ccf": "y",
     "z_ccf": "z",
 }
 SCATTER_PAIRS = [
-    ("x_ccf", "y_ccf", "x-y"),
-    ("x_ccf", "z_ccf", "x-z"),
-    ("y_ccf", "z_ccf", "y-z"),
+    ("x_ccf", "y_ccf", "X-Y"),
+    ("x_ccf", "z_ccf", "X-Z"),
+    ("y_ccf", "z_ccf", "Y-Z"),
 ]
 
 

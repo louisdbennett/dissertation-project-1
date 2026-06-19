@@ -10,7 +10,7 @@ from merfish_utils import SUPERTYPE_COVERAGE, group_supertypes
 
 MERFISH_DATA_PATH = Path("analysis_tables/merfish_supertype_location_table.csv")
 SNR_DATA_PATH = Path("analysis_tables/snr_proj_location_table.csv")
-SCATTER_OUTPUT_PATH = Path("analysis_outputs/scatter_plots.png")
+SCATTER_OUTPUT_PATH = Path("analysis_outputs/soma_scatter_plots.png")
 BRAINRENDER_OUTPUT_PATH = Path("analysis_outputs/brainrender_map.png")
 
 
@@ -44,12 +44,12 @@ def make_scatter_plot(
     ]
     grouped_colors = plt.get_cmap("tab10" if merfish.get("supertype_grouped", pd.Series()).nunique() <= 10 else "tab20", merfish["supertype_grouped"].nunique()) if show_grouped_supertypes else None
     axis_labels = {
-        "x_ccf": "x (CCF)",
-        "y_ccf": "y (CCF)",
-        "z_ccf": "z (CCF)",
-        "x": "x (CCF)",
-        "y": "y (CCF)",
-        "z": "z (CCF)",
+        "x_ccf": "x",
+        "y_ccf": "y",
+        "z_ccf": "z",
+        "x": "x",
+        "y": "y",
+        "z": "z",
     }
 
     for ax, (mx, my, sx, sy, title) in zip(axes, pairs):
@@ -90,7 +90,7 @@ def make_scatter_plot(
             color="black",
             label="SNR",
             edgecolors="white",
-            linewidths=0.35,
+            linewidths=0,
             zorder=3,
         )
         ax.set_xlabel(axis_labels[mx])
@@ -116,11 +116,8 @@ def make_scatter_plot(
         bbox_to_anchor=(0.84, 0.5),
         markerscale=2.2,
     )
-    title = "Soma coverage: SNR vs MERFISH"
-    if z_filtered:
-        title += " (SNR z range)"
-    if show_grouped_supertypes:
-        title += f" + grouped supertypes ({SUPERTYPE_COVERAGE:.0%} coverage)"
+    title = "SOMA locations across SNR and MERFISH datasets"
+
     fig.suptitle(title, y=1.02)
     fig.tight_layout(rect=(0, 0, 0.82, 1))
 

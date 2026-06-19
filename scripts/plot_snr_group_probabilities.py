@@ -39,8 +39,8 @@ def plot_group_mean_probabilities(group_column: str = "proj") -> Path:
         ax.set_xlim(0, 1)
         ax.set_xlabel("Mean predicted probability")
 
-    axes[0].set_ylabel("Grouped supertype")
-    fig.suptitle(f"Mean transferred grouped-supertype probabilities by {group_column}", y=1.02)
+    axes[0].set_ylabel("Supertype")
+    fig.suptitle(f"Mean supertype probabilities by {group_column}", y=1.02)
     fig.tight_layout()
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
