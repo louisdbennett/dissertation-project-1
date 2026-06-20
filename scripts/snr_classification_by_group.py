@@ -5,12 +5,12 @@ import pandas as pd
 
 from merfish_utils import (
     FEATURES,
-    SNR_DATA_PATH,
     add_model_cli_args,
     build_selected_model,
     get_model_cli_params,
     prepare_filtered_data
 )
+from snr_utils import load_snr_data
 
 OUTPUT_DIR = Path("analysis_outputs/snr_classification")
 
@@ -21,7 +21,7 @@ def fit_grouped_supertypes(
 ) -> dict[str, object]:
     """Fit the grouped MERFISH supertype model and apply it to SNR coordinates."""
     prepared = prepare_filtered_data()
-    snr = pd.read_csv(SNR_DATA_PATH)
+    snr = load_snr_data()
 
     fitted_model = build_selected_model(model_name, len(prepared["class_order"]), **model_params)
 

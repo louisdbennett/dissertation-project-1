@@ -10,8 +10,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
+from snr_utils import load_snr_data
 
-DATA_PATH = Path("analysis_tables/snr_proj_location_table.csv")
 FEATURES = ["x", "y", "z"]
 TARGET = "proj"
 CLASS_ORDER = ["rsp", "rsp_orb", "orb"]
@@ -94,7 +94,7 @@ def run_analysis(model_name: str = "logistic") -> dict[str, object]:
         confusion_matrix: confusion matrix across projection labels
         confusion_matrix_row_normalized: row-normalized confusion matrix
     """
-    df = pd.read_csv(DATA_PATH)
+    df = load_snr_data()
     x = df[FEATURES]
     y = df[TARGET].map({label: idx for idx, label in enumerate(CLASS_ORDER)}).astype(int)
     groups = df["mouseID"]

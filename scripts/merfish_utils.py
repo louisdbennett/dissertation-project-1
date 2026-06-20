@@ -19,6 +19,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
+from snr_utils import load_snr_data
 
 
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="sklearn.utils.extmath")
@@ -186,7 +187,7 @@ def prepare_filtered_data(
     z_min = None
     z_max = None
     if filter_to_snr_z_range:
-        snr = pd.read_csv(SNR_DATA_PATH)
+        snr = load_snr_data()
         z_min = snr["z"].min()
         z_max = snr["z"].max()
         df = df[(df["z_ccf"] >= z_min) & (df["z_ccf"] <= z_max)]

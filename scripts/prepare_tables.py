@@ -64,8 +64,9 @@ def prepare_merfish() -> pd.DataFrame:
 
 
 def prepare_snr() -> pd.DataFrame:
-    """Build the clean SNR location table used by the analysis scripts."""
+    """Build the clean SNR table used by the analysis scripts."""
     df = pd.read_csv(REPO_ROOT / "master_detailed_comment.csv")
+    endpoint_cols = [col for col in df.columns if col.endswith("_endpoint")]
 
     keep = df[
         df["proj"].notna()
@@ -83,6 +84,7 @@ def prepare_snr() -> pd.DataFrame:
             "y",
             "z",
             "proj",
+            *endpoint_cols,
         ]
     ].sort_values("neuron_ID")
 

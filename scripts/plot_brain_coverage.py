@@ -6,10 +6,10 @@ import pandas as pd
 import vedo
 from brainrender import Scene, settings
 from brainrender.actors import Points
-from merfish_utils import SUPERTYPE_COVERAGE, group_supertypes
+from merfish_utils import group_supertypes
+from snr_utils import load_snr_data
 
 MERFISH_DATA_PATH = Path("analysis_tables/merfish_supertype_location_table.csv")
-SNR_DATA_PATH = Path("analysis_tables/snr_proj_location_table.csv")
 SCATTER_OUTPUT_PATH = Path("analysis_outputs/soma_scatter_plots.png")
 BRAINRENDER_OUTPUT_PATH = Path("analysis_outputs/brainrender_map.png")
 
@@ -27,7 +27,7 @@ def make_scatter_plot(
     show_grouped_supertypes: bool = False,
 ) -> Path:
     merfish = pd.read_csv(MERFISH_DATA_PATH, dtype={"cell_id": "string"})
-    snr = pd.read_csv(SNR_DATA_PATH)
+    snr = load_snr_data()
 
     if z_filtered:
         merfish = merfish[
@@ -129,45 +129,13 @@ def make_scatter_plot(
     return output_path
 
 
-def make_brainrender_plot() -> Path:
-    merfish = pd.read_csv(MERFISH_DATA_PATH)
-    snr = pd.read_csv(SNR_DATA_PATH)
-
-    settings.OFFSCREEN = True
-    vedo.settings.default_backend = "vtk"
-
-    scene = Scene(atlas_name="allen_mouse_25um", title="MERFISH EC cells + SNR soma")
-
-    for structure, color in [("ENTm", "orange"), ("ENTl", "seagreen")]:
-        coords = merfish.loc[
-            merfish["structure"] == structure, ["x_ccf", "y_ccf", "z_ccf"]
-        ].to_numpy()
-        scene.add(Points(coords, radius=10, colors=color, alpha=0.35))
-
-    snr_coords = snr[["x", "y", "z"]].to_numpy()
-    scene.add(Points(snr_coords, radius=40, colors="black", alpha=1.0))
-
-    scene.add_brain_region("ENTl", alpha=0.05, color="lightblue")
-    scene.add_brain_region("ENTm", alpha=0.05, color="lightblue")
-
-    scene.render(interactive=False, camera="three_quarters", zoom=1.35)
-    BRAINRENDER_OUTPUT_PATH.parent.mkdir(exist_ok=True)
-    scene.screenshot(name=str(BRAINRENDER_OUTPUT_PATH))
-
-    return BRAINRENDER_OUTPUT_PATH
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["scatter", "brainrender"], default="scatter")
     parser.add_argument("--z-filtered", action="store_true")
     parser.add_argument("--show-grouped-supertypes", action="store_true")
     args = parser.parse_args()
 
-    if args.mode == "brainrender":
-        make_brainrender_plot()
-    else:
-        make_scatter_plot(
-            z_filtered=args.z_filtered,
-            show_grouped_supertypes=args.show_grouped_supertypes,
-        )
+    make_scatter_plot(
+        z_filtered=args.z_filtered,
+        show_grouped_supertypes=args.show_grouped_supertypes,
+    )

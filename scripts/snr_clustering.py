@@ -1,85 +1,85 @@
+from argparse import ArgumentParser
 from pathlib import Path
+import warnings
 
+import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.cluster import KMeans
+import seaborn as sns
 from sklearn.metrics import silhouette_score
-from sklearn.preprocessing import StandardScaler
 
-from snr_permanova import clr_transform, run_permanova
+from snr_utils import load_snr_data
 
 
-SNR_PATH = Path("analysis_tables/snr_proj_location_table.csv")
-RAW_SNR_PATH = Path("master_detailed_comment.csv")
-PROBABILITY_PATH = Path("analysis_outputs/snr_classification/full_probabilities.csv")
 OUTPUT_DIR = Path("analysis_outputs/snr_clustering")
-K_VALUES = [2, 3, 4, 5]
-RANDOM_STATE = 0
-MIN_CLUSTER_SIZE = 10
-META_COLS = {"neuron_ID", "mouseID", "injection", "x", "y", "z", "proj", "predicted_label"}
+
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="sklearn.utils.extmath")
 
 
-def load_snr_feature_table() -> pd.DataFrame:
-    """Load the SNR analysis rows with the projection-feature columns added."""
-    snr = pd.read_csv(SNR_PATH)
-    raw = pd.read_csv(RAW_SNR_PATH, low_memory=False)
-    feature_cols = [col for col in raw.columns if col.endswith("_length") or col.endswith("_endpoint")]
-    return snr.merge(raw[["neuron_ID", *feature_cols]], on="neuron_ID", how="left")
+def save_dendrogram(linkage_matrix) -> None:
+    """Save the dendrogram panel."""
+    fig, ax = plt.subplots(figsize=(13, 4))
+    from scipy.cluster.hierarchy import dendrogram
+
+    dendrogram(linkage_matrix, ax=ax, no_labels=True, color_threshold=0, above_threshold_color="black")
+    ax.set_xticks([])
+    ax.set_ylabel("distance")
+    ax.set_title("Hierarchical clustering of SNR projection patterns")
+    fig.savefig(OUTPUT_DIR / "dendrogram.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def save_heatmap(x_binary: pd.DataFrame, cluster_labels: pd.Series, cluster_order: list[int]) -> None:
+    """Save the mean projection heatmap by cluster."""
+    heatmap = (
+        x_binary.assign(projection_cluster=cluster_labels.to_numpy())
+        .groupby("projection_cluster")
+        .mean()
+        .reindex(cluster_order)
+        .T
+    )
+    heatmap.index = [col.replace("_endpoint", "") for col in heatmap.index]
+
+    fig, ax = plt.subplots(figsize=(9, 7))
+    sns.heatmap(
+        heatmap,
+        ax=ax,
+        cmap="Blues",
+        vmin=0,
+        vmax=1,
+        cbar_kws={"label": "fraction of neurons with endpoint"},
+    )
+    ax.set_xlabel("projection cluster")
+    ax.set_ylabel("target area")
+    ax.set_xticklabels([str(cluster) for cluster in cluster_order], rotation=0)
+    fig.savefig(OUTPUT_DIR / "cluster_mean_endpoints.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def run_analysis(n_clusters: int = 3) -> None:
+    """Cluster SNR neurons by binary endpoint pattern and save the main summaries."""
+    df, x_binary, endpoint_cols, linkage_matrix, cluster_order = load_snr_data(
+        n_clusters=n_clusters,
+        with_details=True,
+    )
+
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        [
+            {"label_set": "proj", "metric": "euclidean", "score": silhouette_score(x_binary, df["proj"], metric="euclidean")},
+            {
+                "label_set": "projection_cluster",
+                "metric": "euclidean",
+                "score": silhouette_score(x_binary, df["projection_cluster"], metric="euclidean"),
+            },
+        ]
+    ).to_csv(OUTPUT_DIR / "silhouette_comparison.csv", index=False)
+
+    save_dendrogram(linkage_matrix)
+    save_heatmap(x_binary, df["projection_cluster"], cluster_order)
 
 
 if __name__ == "__main__":
-    snr = load_snr_feature_table()
-    transferred = pd.read_csv(PROBABILITY_PATH)
-
-    feature_cols = [col for col in snr.columns if col.endswith("_length") or col.endswith("_endpoint")]
-    x = StandardScaler().fit_transform((snr[feature_cols] + 1).transform("log"))
-    prob_cols = [col for col in transferred.columns if col not in META_COLS]
-    composition = clr_transform(transferred[prob_cols].to_numpy(dtype=float))
-
-    rows = []
-    best_labels = None
-    best_k = None
-    best_r2 = None
-
-    baseline = run_permanova(composition, snr["proj"].to_numpy())
-    rows.append(
-        {
-            "method": "proj",
-            "k": snr["proj"].nunique(),
-            "min_cluster_size": snr["proj"].value_counts().min(),
-            "silhouette_projection_features": None,
-            "pseudo_f": baseline["pseudo_f"],
-            "r2": baseline["r2"],
-            "p_value": baseline["p_value"],
-        }
-    )
-
-    for k in K_VALUES:
-        labels = KMeans(n_clusters=k, n_init=20, random_state=RANDOM_STATE).fit_predict(x)
-        label_counts = pd.Series(labels).value_counts()
-        min_cluster_size = int(label_counts.min())
-        result = run_permanova(composition, labels)
-        rows.append(
-            {
-                "method": "kmeans_projection_features",
-                "k": k,
-                "min_cluster_size": min_cluster_size,
-                "silhouette_projection_features": silhouette_score(x, labels),
-                "pseudo_f": result["pseudo_f"],
-                "r2": result["r2"],
-                "p_value": result["p_value"],
-            }
-        )
-
-        if min_cluster_size >= MIN_CLUSTER_SIZE and (best_r2 is None or result["r2"] > best_r2):
-            best_labels = labels
-            best_k = k
-            best_r2 = result["r2"]
-
-    summary = pd.DataFrame(rows)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    summary.to_csv(OUTPUT_DIR / "cluster_search_summary.csv", index=False)
-
-    if best_labels is not None:
-        assignment = snr.copy()
-        assignment["projection_feature_cluster"] = best_labels
-        assignment.to_csv(OUTPUT_DIR / "best_projection_feature_clusters.csv", index=False)
+    parser = ArgumentParser()
+    parser.add_argument("--n-clusters", type=int, default=3)
+    args = parser.parse_args()
+    run_analysis(n_clusters=args.n_clusters)
