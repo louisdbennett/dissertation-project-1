@@ -5,9 +5,8 @@ This repository contains the code for a dissertation project on linking neuron's
 ## Setup
 
 ```bash
-python3 -m venv .venv
+python -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
