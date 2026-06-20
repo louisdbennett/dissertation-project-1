@@ -6,9 +6,10 @@ import pandas as pd
 
 
 SUMMARY_PATH = Path("analysis_outputs/snr_classification/summary.csv")
-OUTPUT_PATH = Path("analysis_outputs/snr_classification/proj_mean_probabilities.png")
+OUTPUT_PATH = Path("analysis_outputs/snr_classification/group_mean_probabilities.png")
 AXIS_LABELS = {
     "proj": "Projection group",
+    "projection_cluster": "Projection cluster",
 }
 
 
@@ -20,7 +21,7 @@ def format_label(label: str) -> str:
     return clean.replace("_", " ")
 
 
-def plot_group_mean_probabilities(group_column: str = "proj") -> Path:
+def plot_group_mean_probabilities(group_column: str = "projection_cluster") -> Path:
     summary = pd.read_csv(SUMMARY_PATH)
     group_label = AXIS_LABELS.get(group_column, group_column)
     title_group_label = group_label.lower()
@@ -56,7 +57,6 @@ def plot_group_mean_probabilities(group_column: str = "proj") -> Path:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--group-column", default="proj")
+    parser.add_argument("--group-column", default="projection_cluster")
     args = parser.parse_args()
-
-    print(plot_group_mean_probabilities(group_column=args.group_column))
+    plot_group_mean_probabilities(group_column=args.group_column)

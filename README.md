@@ -11,9 +11,9 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-## Run Order
+Add the raw data files to the repository root before running anything.
 
-Add the raw data files to the root of the repository and run the scripts in the following order.
+## Run Order
 
 ### 1. Prepare the local tables
 
@@ -21,13 +21,19 @@ Add the raw data files to the root of the repository and run the scripts in the 
 ./.venv/bin/python scripts/prepare_tables.py
 ```
 
-### 2. Fit the MERFISH model
+### 2. Build the SNR projection clusters
+
+```bash
+./.venv/bin/python scripts/snr_clustering.py
+```
+
+### 3. Fit the MERFISH model
 
 ```bash
 ./.venv/bin/python scripts/merfish_model_comparison.py
 ```
 
-### 4. Run the MERFISH model on the SNR data
+### 4. Run the best MERFISH model on the SNR data
 
 ```bash
 ./.venv/bin/python scripts/snr_classification_by_group.py --model xgboost --n-estimators 500 --max-depth 4 --learning-rate 0.1
@@ -39,10 +45,12 @@ Add the raw data files to the root of the repository and run the scripts in the 
 ./.venv/bin/python scripts/snr_permanova.py
 ```
 
-### 6. Create plots
+### 6. Produce the main plots
 
 ```bash
+./.venv/bin/python scripts/plot_snr_soma.py
 ./.venv/bin/python scripts/plot_snr_group_probabilities.py
+./.venv/bin/python scripts/plot_snr_probability_distributions.py
 ./.venv/bin/python scripts/plot_brain_coverage.py --z-filtered --show-grouped-supertypes
 ./.venv/bin/python scripts/plot_merfish_xgboost.py
 ```

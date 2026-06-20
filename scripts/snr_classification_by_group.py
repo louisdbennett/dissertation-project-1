@@ -16,7 +16,7 @@ OUTPUT_DIR = Path("analysis_outputs/snr_classification")
 
 def fit_grouped_supertypes(
     model_name: str = "logistic",
-    snr_group_col: str = "proj",
+    snr_group_col: str = "projection_cluster",
     **model_params,
 ) -> dict[str, object]:
     """Fit the grouped MERFISH supertype model and apply it to SNR coordinates."""
@@ -57,7 +57,7 @@ def fit_grouped_supertypes(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     add_model_cli_args(parser, default_model="logistic")
-    parser.add_argument("--snr-group-col", default="proj")
+    parser.add_argument("--snr-group-col", default="projection_cluster")
     args = parser.parse_args()
 
     model_params = get_model_cli_params(args)

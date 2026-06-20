@@ -9,10 +9,10 @@ import pandas as pd
 INPUT_PATH = Path("analysis_outputs/snr_classification/full_probabilities.csv")
 OUTPUT_DIR = Path("analysis_outputs/snr_classification")
 DEFAULT_PROBABILITY_COLUMN = "0036 L2/3 IT ENT Glut_4"
-DEFAULT_GROUP_COLUMN = "proj"
-GROUP_ORDER = ["orb", "rsp_orb", "rsp"]
+DEFAULT_GROUP_COLUMN = "projection_cluster"
 AXIS_LABELS = {
     "proj": "Projection group",
+    "projection_cluster": "Projection cluster",
 }
 
 
@@ -36,9 +36,12 @@ def plot_probability_distribution(
     """Plot per-neuron transferred probabilities by SNR group."""
     df = pd.read_csv(INPUT_PATH)
     title_group_label = AXIS_LABELS.get(group_column, group_column).lower()
-    group_order = [group for group in GROUP_ORDER if group in df[group_column].unique()]
-    if not group_order:
-        group_order = df[group_column].dropna().unique().tolist()
+    if group_column == "projection_cluster":
+        group_order = sorted(df[group_column].dropna().unique().tolist())
+    else:
+        group_order = [group for group in ["orb", "rsp_orb", "rsp"] if group in df[group_column].unique()]
+        if not group_order:
+            group_order = df[group_column].dropna().unique().tolist()
 
     grouped_values = [
         df.loc[df[group_column] == group, probability_column].to_numpy(dtype=float)

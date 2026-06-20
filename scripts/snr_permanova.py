@@ -1,4 +1,5 @@
 from pathlib import Path
+import argparse
 
 import numpy as np
 import pandas as pd
@@ -79,18 +80,22 @@ def run_pairwise_permanova(x: np.ndarray, groups: np.ndarray) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--group-col", default="projection_cluster")
+    args = parser.parse_args()
+
     df = pd.read_csv(INPUT_PATH)
-    meta_cols = {"neuron_ID", "mouseID", "injection", "x", "y", "z", "proj", "predicted_label"}
+    meta_cols = {"neuron_ID", "mouseID", "injection", "x", "y", "z", "proj", "projection_cluster", "predicted_label"}
     prob_cols = [col for col in df.columns if col not in meta_cols]
 
     x = clr_transform(df[prob_cols].to_numpy(dtype=float))
-    groups = df["proj"].to_numpy()
+    groups = df[args.group_col].to_numpy()
 
     global_result = pd.DataFrame([run_permanova(x, groups)])
     pairwise_result = run_pairwise_permanova(x, groups)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    global_path = OUTPUT_DIR / "permanova_global.csv"
-    pairwise_path = OUTPUT_DIR / "permanova_pairwise.csv"
+    global_path = OUTPUT_DIR / f"{args.group_col}_permanova_global.csv"
+    pairwise_path = OUTPUT_DIR / f"{args.group_col}_permanova_pairwise.csv"
     global_result.to_csv(global_path, index=False)
     pairwise_result.to_csv(pairwise_path, index=False)

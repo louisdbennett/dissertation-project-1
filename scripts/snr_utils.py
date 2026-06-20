@@ -93,7 +93,7 @@ def add_legend(
     colors: dict,
     legend_labels: dict,
     x0: int = 2480,
-    y0: int = 1680,
+    y0: int = 1780,
     dy: int = 150,
 ) -> None:
     """Add a simple legend to a saved brainrender screenshot."""
@@ -109,7 +109,7 @@ def add_legend(
     for i, label in enumerate(order):
         y = y0 + i * dy
         draw.ellipse((x0, y - r, x0 + 2 * r, y + r), fill=colors[label], outline=None)
-        draw.text((x0 + 90, y - 56), legend_labels[label], fill=colors[label], font=font)
+        draw.text((x0 + 90, y - 42), legend_labels[label], fill=colors[label], font=font)
 
     image.save(image_path)
 
