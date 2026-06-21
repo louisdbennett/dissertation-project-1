@@ -13,10 +13,14 @@ from sklearn.preprocessing import StandardScaler
 
 SNR_PATH = Path("analysis_tables/snr_proj_location_table.csv")
 ENDPOINT_THRESHOLD = 1
+
+# define default clustering
 N_CLUSTERS = 3
-CLUSTER_TRANSFORM = "binary"
-DEFAULT_CLUSTER_COLUMN = "projection_cluster_binary"
+CLUSTER_TRANSFORM = "log"
+DEFAULT_CLUSTER_COLUMN = "projection_cluster_log"
 EXCLUDED_CLUSTER_COMMENTS = {"bad tracing", "outside of ECL5a"}
+
+# used in plots
 PROJ_COLORS = {
     "orb": "#5fa3c7",
     "rsp_orb": "#d7b227",
