@@ -1,21 +1,15 @@
 from pathlib import Path
 
 import anndata as ad
-import matplotlib.pyplot as plt
 import pandas as pd
-import scanpy as sc
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTDIR = REPO_ROOT / "analysis_tables"
-ANALYSIS_OUTPUT_DIR = REPO_ROOT / "analysis_outputs"
-N_GENE_PCS = 200
-PCA_PLOT_COMPONENTS = 200
-PCA_VARIANCE_PLOT_PATH = ANALYSIS_OUTPUT_DIR / "variance_explained.png"
 
 
 def prepare_merfish() -> pd.DataFrame:
-    """Build the clean MERFISH table with location and a few expression PCs."""
+    """Build the clean MERFISH table with the location and label columns used in the analysis."""
     adata = ad.read_h5ad(REPO_ROOT / "ec_obj_imputed_log2.h5ad")
 
     keep_mask = (
@@ -27,22 +21,7 @@ def prepare_merfish() -> pd.DataFrame:
     )
     keep_adata = adata[keep_mask].copy()
 
-    n_pcs = min(PCA_PLOT_COMPONENTS, keep_adata.n_obs - 1, keep_adata.n_vars)
-    sc.pp.pca(keep_adata, n_comps=n_pcs)
-
-    sc.pl.pca_variance_ratio(keep_adata, n_pcs=n_pcs, log=True, show=False)
-    ANALYSIS_OUTPUT_DIR.mkdir(exist_ok=True)
-    fig = plt.gcf()
-    fig.savefig(PCA_VARIANCE_PLOT_PATH, dpi=200, bbox_inches="tight")
-    plt.close(fig)
-
     keep = keep_adata.obs.copy().reset_index(names="cell_id")
-    pc_df = pd.DataFrame(
-        keep_adata.obsm["X_pca"][:, :N_GENE_PCS],
-        columns=[f"expr_pc_{i + 1}" for i in range(N_GENE_PCS)],
-        index=keep.index,
-    )
-    keep = pd.concat([keep, pc_df], axis=1)
 
     keep = keep[
         [
@@ -56,7 +35,6 @@ def prepare_merfish() -> pd.DataFrame:
             "y_ccf",
             "z_ccf",
             "supertype",
-            *[f"expr_pc_{i + 1}" for i in range(N_GENE_PCS)],
         ]
     ].sort_values("cell_id")
 
@@ -69,8 +47,7 @@ def prepare_snr() -> pd.DataFrame:
     endpoint_cols = [col for col in df.columns if col.endswith("_endpoint")]
 
     keep = df[
-        df["proj"].notna()
-        & df["x"].notna()
+        df["x"].notna()
         & df["y"].notna()
         & df["z"].notna()
     ].copy()
@@ -80,6 +57,7 @@ def prepare_snr() -> pd.DataFrame:
             "neuron_ID",
             "mouseID",
             "injection",
+            "comment",
             "x",
             "y",
             "z",
