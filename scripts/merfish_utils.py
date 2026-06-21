@@ -32,7 +32,7 @@ FEATURES = ["x_ccf", "y_ccf", "z_ccf"]
 TARGET = "supertype_grouped"
 
 # lets us do some sensitivity analysis on this later
-SUPERTYPE_COVERAGE = float(os.environ.get("SUPERTYPE_COVERAGE", "0.5"))
+SUPERTYPE_COVERAGE = float(os.environ.get("SUPERTYPE_COVERAGE", "0.4"))
 
 N_SPLITS = 5
 SCREEN_TEST_SIZE = 0.2
