@@ -11,6 +11,7 @@ from merfish_utils import build_selected_model, prepare_filtered_data
 OUTPUT_DIR = Path("analysis_outputs/merfish_prediction")
 PD_OUTPUT_PATH = OUTPUT_DIR / "xgboost_partial_dependence.png"
 SCATTER_OUTPUT_PATH = OUTPUT_DIR / "xgboost_scatter_plots.png"
+ACTUAL_SCATTER_OUTPUT_PATH = OUTPUT_DIR / "merfish_actual_scatter_plots.png"
 DEFAULT_PARAMS = {
     "n_estimators": 500,
     "max_depth": 4,
@@ -63,11 +64,52 @@ def average_partial_dependence(
     return feature_grid, pd.DataFrame(rows, columns=class_order)
 
 
+def save_scatter_plot(
+    plot_df: pd.DataFrame,
+    label_col: str,
+    label_order: list[str],
+    color_map: dict[str, object],
+    output_path: Path,
+) -> None:
+    """Save one 3-panel MERFISH scatter plot for a given label column."""
+    scatter_fig, scatter_axes = plt.subplots(1, 3, figsize=(18, 5))
+
+    for ax, (x_col, y_col, title) in zip(scatter_axes, SCATTER_PAIRS):
+        for label in label_order:
+            group_df = plot_df[plot_df[label_col] == label]
+            ax.scatter(
+                group_df[x_col],
+                group_df[y_col],
+                s=10,
+                alpha=0.35 if label != "other" else 0.18,
+                color=color_map[label],
+                linewidths=0,
+                label=format_label(label),
+            )
+        ax.set_xlabel(FEATURE_LABELS[x_col])
+        ax.set_ylabel(FEATURE_LABELS[y_col])
+        ax.set_title(title)
+
+    scatter_handles, scatter_labels = scatter_axes[0].get_legend_handles_labels()
+    scatter_fig.legend(
+        scatter_handles,
+        scatter_labels,
+        frameon=False,
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.02),
+        ncol=max(2, len(scatter_labels)),
+        markerscale=2,
+    )
+    scatter_fig.tight_layout(rect=(0, 0.08, 1, 1))
+    scatter_fig.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close(scatter_fig)
+
+
 def make_plot(
     n_estimators: int = DEFAULT_PARAMS["n_estimators"],
     max_depth: int = DEFAULT_PARAMS["max_depth"],
     learning_rate: float = DEFAULT_PARAMS["learning_rate"],
-) -> tuple[Path, Path]:
+) -> tuple[Path, Path, Path]:
     """Fit the current MERFISH XGBoost model and save simple location plots."""
     prepared = prepare_filtered_data()
     model = build_selected_model(
@@ -91,6 +133,7 @@ def make_plot(
     predicted_idx = model.predict(x)
     predicted_labels = pd.Series(predicted_idx).map(dict(enumerate(class_order)))
     plot_df = prepared["data"][["x_ccf", "y_ccf", "z_ccf"]].reset_index(drop=True).copy()
+    plot_df["actual_label"] = prepared["data"]["supertype_grouped"].reset_index(drop=True)
     plot_df["predicted_label"] = predicted_labels
 
     label_order = label_counts.index.tolist()
@@ -122,53 +165,17 @@ def make_plot(
         pd_handles,
         pd_labels,
         frameon=False,
-        loc="center left",
-        bbox_to_anchor=(0.9, 0.5),
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.02),
+        ncol=max(2, len(pd_labels)),
     )
-    pd_fig.suptitle(
-        "MERFISH supertype classifier partial dependence",
-        y=1.02,
-    )
-    pd_fig.tight_layout(rect=(0, 0, 0.88, 1))
-
-    scatter_fig, scatter_axes = plt.subplots(1, 3, figsize=(18, 5))
-
-    for ax, (x_col, y_col, title) in zip(scatter_axes, SCATTER_PAIRS):
-        for label in label_order:
-            group_df = plot_df[plot_df["predicted_label"] == label]
-            ax.scatter(
-                group_df[x_col],
-                group_df[y_col],
-                s=10,
-                alpha=0.35 if label != "other" else 0.18,
-                color=color_map[label],
-                linewidths=0,
-                label=format_label(label),
-            )
-        ax.set_xlabel(FEATURE_LABELS[x_col])
-        ax.set_ylabel(FEATURE_LABELS[y_col])
-        ax.set_title(title)
-
-    scatter_handles, scatter_labels = scatter_axes[0].get_legend_handles_labels()
-    scatter_fig.legend(
-        scatter_handles,
-        scatter_labels,
-        frameon=False,
-        loc="center left",
-        bbox_to_anchor=(0.9, 0.5),
-        markerscale=2,
-    )
-    scatter_fig.suptitle(
-        "MERFISH predicted supertypes",
-        y=1.02,
-    )
-    scatter_fig.tight_layout(rect=(0, 0, 0.88, 1))
+    pd_fig.tight_layout(rect=(0, 0.08, 1, 1))
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     pd_fig.savefig(PD_OUTPUT_PATH, dpi=200, bbox_inches="tight")
-    scatter_fig.savefig(SCATTER_OUTPUT_PATH, dpi=200, bbox_inches="tight")
     plt.close(pd_fig)
-    plt.close(scatter_fig)
+    save_scatter_plot(plot_df, "predicted_label", label_order, color_map, SCATTER_OUTPUT_PATH)
+    save_scatter_plot(plot_df, "actual_label", label_order, color_map, ACTUAL_SCATTER_OUTPUT_PATH)
 
 
 if __name__ == "__main__":
