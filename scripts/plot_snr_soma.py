@@ -4,6 +4,7 @@ from pathlib import Path
 from snr_utils import (
     CLUSTER_COLORS,
     CLUSTER_LABELS,
+    DEFAULT_CLUSTER_COLUMN,
     PROJ_COLORS,
     PROJ_LABELS,
     load_snr_data,
@@ -17,8 +18,14 @@ PLOT_CONFIG = {
         "colors": PROJ_COLORS,
         "legend_labels": PROJ_LABELS,
     },
-    "projection_cluster": {
-        "output_path": Path("analysis_outputs/snr_soma_by_cluster.png"),
+    "projection_cluster_binary": {
+        "output_path": Path("analysis_outputs/snr_soma_by_cluster_binary.png"),
+        "order": [1, 2, 3],
+        "colors": CLUSTER_COLORS,
+        "legend_labels": CLUSTER_LABELS,
+    },
+    "projection_cluster_log": {
+        "output_path": Path("analysis_outputs/snr_soma_by_cluster_log.png"),
         "order": [1, 2, 3],
         "colors": CLUSTER_COLORS,
         "legend_labels": CLUSTER_LABELS,
@@ -26,7 +33,7 @@ PLOT_CONFIG = {
 }
 
 
-def make_plot(group_col: str = "projection_cluster") -> Path:
+def make_plot(group_col: str = DEFAULT_CLUSTER_COLUMN) -> Path:
     """Render SNR soma locations in brainrender for one grouping."""
     df = load_snr_data()
     config = PLOT_CONFIG[group_col]
@@ -42,6 +49,6 @@ def make_plot(group_col: str = "projection_cluster") -> Path:
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--group-col", choices=["proj", "projection_cluster"], default="projection_cluster")
+    parser.add_argument("--group-col", choices=["proj", "projection_cluster_binary", "projection_cluster_log"], default=DEFAULT_CLUSTER_COLUMN)
     args = parser.parse_args()
     make_plot(group_col=args.group_col)

@@ -4,6 +4,8 @@ import argparse
 import numpy as np
 import pandas as pd
 
+from snr_utils import DEFAULT_CLUSTER_COLUMN
+
 
 INPUT_PATH = Path("analysis_outputs/snr_classification/full_probabilities.csv")
 OUTPUT_DIR = Path("analysis_outputs/snr_classification")
@@ -81,12 +83,24 @@ def run_pairwise_permanova(x: np.ndarray, groups: np.ndarray) -> pd.DataFrame:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--group-col", default="projection_cluster")
+    parser.add_argument("--group-col", default=DEFAULT_CLUSTER_COLUMN)
     args = parser.parse_args()
 
     df = pd.read_csv(INPUT_PATH)
-    meta_cols = {"neuron_ID", "mouseID", "injection", "x", "y", "z", "proj", "projection_cluster", "predicted_label"}
-    prob_cols = [col for col in df.columns if col not in meta_cols]
+    meta_cols = {
+        "neuron_ID",
+        "mouseID",
+        "injection",
+        "x",
+        "y",
+        "z",
+        "proj",
+        "projection_cluster_binary",
+        "projection_cluster_log",
+        "predicted_label",
+        "comment",
+    }
+    prob_cols = [col for col in df.columns if col not in meta_cols and col != 'comment']
 
     x = clr_transform(df[prob_cols].to_numpy(dtype=float))
     groups = df[args.group_col].to_numpy()

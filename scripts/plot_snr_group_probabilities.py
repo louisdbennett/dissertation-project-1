@@ -1,15 +1,18 @@
+import argparse
 from pathlib import Path
 
-import argparse
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from snr_utils import DEFAULT_CLUSTER_COLUMN
 
-SUMMARY_PATH = Path("analysis_outputs/snr_classification/summary.csv")
+
+INPUT_PATH = Path("analysis_outputs/snr_classification/full_probabilities.csv")
 OUTPUT_PATH = Path("analysis_outputs/snr_classification/group_mean_probabilities.png")
 AXIS_LABELS = {
     "proj": "Projection group",
-    "projection_cluster": "Projection cluster",
+    "projection_cluster_binary": "Binary projection cluster",
+    "projection_cluster_log": "Log projection cluster",
 }
 
 
@@ -21,12 +24,26 @@ def format_label(label: str) -> str:
     return clean.replace("_", " ")
 
 
-def plot_group_mean_probabilities(group_column: str = "projection_cluster") -> Path:
-    summary = pd.read_csv(SUMMARY_PATH)
+def plot_group_mean_probabilities(group_column: str = DEFAULT_CLUSTER_COLUMN) -> Path:
+    df = pd.read_csv(INPUT_PATH)
     group_label = AXIS_LABELS.get(group_column, group_column)
     title_group_label = group_label.lower()
 
-    value_cols = [col for col in summary.columns if col != group_column]
+    meta_cols = {
+        "neuron_ID",
+        "mouseID",
+        "injection",
+        "comment",
+        "x",
+        "y",
+        "z",
+        "proj",
+        "projection_cluster_binary",
+        "projection_cluster_log",
+        "predicted_label",
+    }
+    value_cols = [col for col in df.columns if col not in meta_cols]
+    summary = df.groupby(group_column)[value_cols].mean().reset_index()
     order = summary[value_cols].mean().sort_values(ascending=False).index.tolist()
     group_order = summary[group_column].tolist()
 
@@ -57,6 +74,6 @@ def plot_group_mean_probabilities(group_column: str = "projection_cluster") -> P
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--group-column", default="projection_cluster")
+    parser.add_argument("--group-column", default=DEFAULT_CLUSTER_COLUMN)
     args = parser.parse_args()
     plot_group_mean_probabilities(group_column=args.group_column)
