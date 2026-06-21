@@ -13,8 +13,6 @@ from snr_utils import DEFAULT_CLUSTER_COLUMN, get_binary_endpoint_matrix, load_s
 OUTPUT_DIR = Path("analysis_outputs/snr_clustering")
 GROUP_ORDERS = {
     "proj": ["rsp", "rsp_orb", "orb"],
-    "projection_cluster_binary": [1, 2, 3],
-    "projection_cluster_log": [1, 2, 3],
 }
 X_LABELS = {
     "proj": "Projection group",
@@ -39,7 +37,10 @@ def save_dendrogram(linkage_matrix, transform: str) -> None:
 
 def save_heatmap(x_binary: pd.DataFrame, labels: pd.Series, group_col: str, transform: str) -> None:
     """Save the mean projection heatmap for one SNR grouping column."""
-    group_order = [label for label in GROUP_ORDERS[group_col] if label in labels.dropna().unique()]
+    if group_col == "proj":
+        group_order = [label for label in GROUP_ORDERS[group_col] if label in labels.dropna().unique()]
+    else:
+        group_order = sorted(labels.dropna().unique().tolist())
     heatmap = (
         x_binary.assign(group=labels.to_numpy())
         .groupby("group")

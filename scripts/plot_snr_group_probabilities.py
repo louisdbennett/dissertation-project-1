@@ -29,7 +29,7 @@ def plot_group_mean_probabilities(group_column: str = DEFAULT_CLUSTER_COLUMN) ->
     group_label = AXIS_LABELS.get(group_column, group_column)
     title_group_label = group_label.lower()
 
-    meta_cols = {
+    non_probability_cols = {
         "neuron_ID",
         "mouseID",
         "injection",
@@ -42,7 +42,12 @@ def plot_group_mean_probabilities(group_column: str = DEFAULT_CLUSTER_COLUMN) ->
         "projection_cluster_log",
         "predicted_label",
     }
-    value_cols = [col for col in df.columns if col not in meta_cols]
+    value_cols = [
+        col
+        for col in df.columns
+        if col not in non_probability_cols
+        and not col.endswith("_endpoint")
+    ]
     summary = df.groupby(group_column)[value_cols].mean().reset_index()
     order = summary[value_cols].mean().sort_values(ascending=False).index.tolist()
     group_order = summary[group_column].tolist()
