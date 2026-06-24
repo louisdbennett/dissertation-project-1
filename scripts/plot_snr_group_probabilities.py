@@ -26,8 +26,6 @@ def format_label(label: str) -> str:
 
 def plot_group_mean_probabilities(group_column: str = DEFAULT_CLUSTER_COLUMN) -> Path:
     df = pd.read_csv(INPUT_PATH)
-    group_label = AXIS_LABELS.get(group_column, group_column)
-    title_group_label = group_label.lower()
 
     non_probability_cols = {
         "neuron_ID",

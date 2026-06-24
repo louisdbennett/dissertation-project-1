@@ -5,26 +5,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from snr_utils import DEFAULT_CLUSTER_COLUMN
-
-
 INPUT_PATH = Path("analysis_outputs/snr_classification/full_probabilities.csv")
 OUTPUT_DIR = Path("analysis_outputs/snr_classification")
 DEFAULT_PROBABILITY_COLUMN = "0036 L2/3 IT ENT Glut_4"
-DEFAULT_GROUP_COLUMN = DEFAULT_CLUSTER_COLUMN
+DEFAULT_GROUP_COLUMN = "projection_cluster_log"
 AXIS_LABELS = {
     "proj": "Projection group",
     "projection_cluster_binary": "Binary projection cluster",
     "projection_cluster_log": "Log projection cluster",
 }
-
-
-def format_label(label: str) -> str:
-    if label == "other":
-        return "Other"
-    parts = label.split(" ", 1)
-    clean = parts[1] if len(parts) == 2 and parts[0].isdigit() else label
-    return clean.replace("_", " ")
 
 
 def make_output_path(probability_column: str) -> Path:
@@ -38,7 +27,6 @@ def plot_probability_distribution(
 ) -> Path:
     """Plot per-neuron transferred probabilities by SNR group."""
     df = pd.read_csv(INPUT_PATH)
-    title_group_label = AXIS_LABELS.get(group_column, group_column).lower()
     if group_column.startswith("projection_cluster"):
         group_order = sorted(df[group_column].dropna().unique().tolist())
     else:
@@ -85,6 +73,7 @@ def plot_probability_distribution(
     fig.tight_layout()
     fig.savefig(output_path, dpi=200, bbox_inches="tight")
     plt.close(fig)
+    return output_path
 
 
 if __name__ == "__main__":
