@@ -6,6 +6,7 @@ import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTDIR = REPO_ROOT / "analysis_tables"
+MERFISH_CLASS_FOR_DE = "01 IT-ET Glut"
 
 
 def prepare_merfish() -> pd.DataFrame:
@@ -41,6 +42,36 @@ def prepare_merfish() -> pd.DataFrame:
     return keep
 
 
+def prepare_merfish_de_cells() -> pd.DataFrame:
+    """Build the MERFISH cell table used by the differential expression script."""
+    adata = ad.read_h5ad(REPO_ROOT / "ec_obj_imputed_log2.h5ad")
+    snr = pd.read_csv(OUTDIR / "snr_proj_location_table.csv")
+    z_min = snr["z"].min()
+    z_max = snr["z"].max()
+
+    keep_mask = (
+        adata.obs["x_ccf"].notna()
+        & adata.obs["y_ccf"].notna()
+        & adata.obs["z_ccf"].notna()
+        & adata.obs["supertype"].notna()
+        & adata.obs["z_ccf"].between(z_min, z_max)
+    )
+    keep = adata.obs.loc[keep_mask].copy().reset_index(names="cell_id")
+    keep = keep[
+        [
+            "cell_id",
+            "class",
+            "subclass",
+            "supertype",
+            "x_ccf",
+            "y_ccf",
+            "z_ccf",
+            "brain_section_label",
+        ]
+    ].sort_values("cell_id")
+    return keep
+
+
 def prepare_snr() -> pd.DataFrame:
     """Build the clean SNR table used by the analysis scripts."""
     df = pd.read_csv(REPO_ROOT / "master_detailed_comment.csv")
@@ -73,7 +104,9 @@ if __name__ == "__main__":
     OUTDIR.mkdir(exist_ok=True)
 
     merfish = prepare_merfish()
+    merfish_de_cells = prepare_merfish_de_cells()
     snr = prepare_snr()
 
     merfish.to_csv(OUTDIR / "merfish_supertype_location_table.csv", index=False)
+    merfish_de_cells.to_csv(OUTDIR / "merfish_de_cell_table.csv", index=False)
     snr.to_csv(OUTDIR / "snr_proj_location_table.csv", index=False)
