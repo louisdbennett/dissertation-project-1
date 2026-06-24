@@ -62,6 +62,14 @@ def get_endpoint_matrix(
     """Return the endpoint matrix used for clustering."""
     if transform == "binary":
         return get_binary_endpoint_matrix(df, threshold=threshold)
+    if transform == "xyz":
+        xyz_cols = ["x", "y", "z"]
+        x_xyz = pd.DataFrame(
+            StandardScaler().fit_transform(df[xyz_cols]),
+            columns=xyz_cols,
+            index=df.index,
+        )
+        return x_xyz, xyz_cols
 
     endpoint_cols = get_endpoint_columns(df)
     x_log = pd.DataFrame(
@@ -128,10 +136,19 @@ def load_snr_data(
         transform="log",
         label_col="projection_cluster_log",
     )
+    keep, x_xyz, _, xyz_linkage_matrix, xyz_cluster_order = add_hierarchical_cluster_label(
+        keep,
+        n_clusters=n_clusters,
+        threshold=threshold,
+        transform="xyz",
+        label_col="projection_cluster_xyz",
+    )
 
     if with_details:
         if transform == "log":
             return keep, x_log, endpoint_cols, log_linkage_matrix, log_cluster_order
+        if transform == "xyz":
+            return keep, x_xyz, endpoint_cols, xyz_linkage_matrix, xyz_cluster_order
         return keep, x_binary, endpoint_cols, binary_linkage_matrix, binary_cluster_order
         
     return keep

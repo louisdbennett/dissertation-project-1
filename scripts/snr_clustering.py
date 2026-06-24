@@ -7,7 +7,7 @@ import pandas as pd
 import seaborn as sns
 from sklearn.metrics import silhouette_score
 
-from snr_utils import DEFAULT_CLUSTER_COLUMN, get_binary_endpoint_matrix, load_snr_data
+from snr_utils import CLUSTER_TRANSFORM, DEFAULT_CLUSTER_COLUMN, get_binary_endpoint_matrix, load_snr_data
 
 
 OUTPUT_DIR = Path("analysis_outputs/snr_clustering")
@@ -18,6 +18,7 @@ X_LABELS = {
     "proj": "Projection group",
     "projection_cluster_binary": "Binary projection cluster",
     "projection_cluster_log": "Log projection cluster",
+    "projection_cluster_xyz": "XYZ projection cluster",
 }
 
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="sklearn.utils.extmath")
@@ -65,7 +66,11 @@ def save_heatmap(x_binary: pd.DataFrame, labels: pd.Series, group_col: str, tran
     plt.close(fig)
 
 
-def run_analysis(n_clusters: int = 3, group_col: str = DEFAULT_CLUSTER_COLUMN, transform: str = "binary") -> pd.DataFrame:
+def run_analysis(
+    n_clusters: int = 3,
+    group_col: str = DEFAULT_CLUSTER_COLUMN,
+    transform: str = CLUSTER_TRANSFORM,
+) -> pd.DataFrame:
     """Cluster SNR neurons and save the main summaries for one endpoint transform."""
     df, x_features, endpoint_cols, linkage_matrix, cluster_order = load_snr_data(
         n_clusters=n_clusters,
@@ -101,13 +106,13 @@ def run_analysis(n_clusters: int = 3, group_col: str = DEFAULT_CLUSTER_COLUMN, t
 
     save_dendrogram(linkage_matrix, transform)
     save_heatmap(x_binary, df[group_col], group_col, transform)
-    return df[["neuron_ID", "proj", "projection_cluster_binary", "projection_cluster_log"]]
+    return df[["neuron_ID", "proj", "projection_cluster_binary", "projection_cluster_log", "projection_cluster_xyz"]]
 
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--n-clusters", type=int, default=3)
-    parser.add_argument("--group-col", choices=["proj", "projection_cluster_binary", "projection_cluster_log"], default=DEFAULT_CLUSTER_COLUMN)
-    parser.add_argument("--transform", choices=["binary", "log"], default="binary")
+    parser.add_argument("--group-col", choices=["proj", "projection_cluster_binary", "projection_cluster_log", "projection_cluster_xyz"], default=DEFAULT_CLUSTER_COLUMN)
+    parser.add_argument("--transform", choices=["binary", "log", "xyz"], default=CLUSTER_TRANSFORM)
     args = parser.parse_args()
     run_analysis(n_clusters=args.n_clusters, group_col=args.group_col, transform=args.transform)
