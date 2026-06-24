@@ -54,3 +54,9 @@ Add the raw data files to the repository root before running anything.
 ./.venv/bin/python scripts/plot_merfish_xgboost.py
 ./.venv/bin/python scripts/plot_merfish_supertype_frequency.py
 ```
+
+### 7. Perform DE 
+
+```bash
+./.venv/bin/python scripts/merfish_differential_expression.py
+```
