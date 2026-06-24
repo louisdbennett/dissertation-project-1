@@ -51,8 +51,8 @@ Add the raw data files to the repository root before running anything.
 ./.venv/bin/python scripts/plot_snr_group_probabilities.py
 ./.venv/bin/python scripts/plot_snr_probability_distributions.py
 ./.venv/bin/python scripts/plot_brain_coverage.py --z-filtered --show-grouped-supertypes
-./.venv/bin/python scripts/plot_merfish_xgboost.py
 ./.venv/bin/python scripts/plot_merfish_supertype_frequency.py
+./.venv/bin/python scripts/plot_merfish_xgboost.py
 ```
 
 ### 7. Perform DE 

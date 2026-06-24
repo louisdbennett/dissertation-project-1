@@ -4,7 +4,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
+from sklearn.metrics import confusion_matrix
 from merfish_utils import build_selected_model, prepare_filtered_data
 
 
@@ -12,6 +12,7 @@ OUTPUT_DIR = Path("analysis_outputs/merfish_prediction")
 PD_OUTPUT_PATH = OUTPUT_DIR / "xgboost_partial_dependence.png"
 SCATTER_OUTPUT_PATH = OUTPUT_DIR / "xgboost_scatter_plots.png"
 ACTUAL_SCATTER_OUTPUT_PATH = OUTPUT_DIR / "merfish_actual_scatter_plots.png"
+CONFUSION_MATRIX_OUTPUT_PATH = OUTPUT_DIR / "xgboost_confusion_matrix.png"
 DEFAULT_PARAMS = {
     "n_estimators": 500,
     "max_depth": 4,
@@ -63,7 +64,6 @@ def average_partial_dependence(
 
     return feature_grid, pd.DataFrame(rows, columns=class_order)
 
-
 def save_scatter_plot(
     plot_df: pd.DataFrame,
     label_col: str,
@@ -105,11 +105,86 @@ def save_scatter_plot(
     plt.close(scatter_fig)
 
 
+def collect_cv_predictions(
+    x: pd.DataFrame,
+    y: pd.Series,
+    cv_splits,
+    num_classes: int,
+    n_estimators: int,
+    max_depth: int,
+    learning_rate: float,
+) -> np.ndarray:
+    """Collect out-of-fold XGBoost predictions across the configured CV splits."""
+    y_pred = np.zeros(len(y), dtype=int)
+
+    for train_idx, test_idx in cv_splits:
+        model = build_selected_model(
+            "xgboost",
+            num_classes,
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            learning_rate=learning_rate,
+        )
+        model.fit(x.iloc[train_idx], y.iloc[train_idx])
+        y_pred[test_idx] = model.predict(x.iloc[test_idx]).astype(int)
+
+    return y_pred
+
+
+def save_confusion_matrix_plot(
+    y_true: pd.Series,
+    y_pred: np.ndarray,
+    class_order: list[str],
+    output_path: Path,
+) -> None:
+    """Save a simple row-normalized confusion matrix plot."""
+    conf_mat = confusion_matrix(y_true, y_pred, labels=np.arange(len(class_order)))
+    row_totals = conf_mat.sum(axis=1)
+    conf_mat_norm = np.divide(
+        conf_mat.astype(float),
+        row_totals[:, None],
+        out=np.zeros_like(conf_mat, dtype=float),
+        where=row_totals[:, None] != 0,
+    )
+
+    fig, ax = plt.subplots(figsize=(8, 7))
+    image = ax.imshow(conf_mat_norm, cmap="Greens", vmin=0, vmax=1)
+    fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
+
+    tick_labels = [format_label(label).replace(" ENT Glut ", "\nENT Glut ") for label in class_order]
+    ax.set_xticks(np.arange(len(tick_labels)))
+    ax.set_yticks(np.arange(len(tick_labels)))
+    ax.set_xticklabels(tick_labels, fontsize=10)
+    ax.set_yticklabels(tick_labels, fontsize=10)
+    ax.set_xlabel("Predicted label")
+    ax.set_ylabel("True label")
+
+    for tick in ax.get_xticklabels():
+        tick.set_ha("center")
+
+    for i in range(conf_mat.shape[0]):
+        for j in range(conf_mat.shape[1]):
+            value = conf_mat_norm[i, j]
+            ax.text(
+                j,
+                i,
+                f"{value:.2f}",
+                ha="center",
+                va="center",
+                color="white" if value > 0.5 else "black",
+                fontsize=10,
+            )
+
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+
+
 def make_plot(
     n_estimators: int = DEFAULT_PARAMS["n_estimators"],
     max_depth: int = DEFAULT_PARAMS["max_depth"],
     learning_rate: float = DEFAULT_PARAMS["learning_rate"],
-) -> tuple[Path, Path, Path]:
+) -> tuple[Path, Path, Path, Path]:
     """Fit the current MERFISH XGBoost model and save simple location plots."""
     prepared = prepare_filtered_data()
     model = build_selected_model(
@@ -124,7 +199,6 @@ def make_plot(
     x = prepared["x"].copy()
     class_order = prepared["class_order"]
     label_counts = prepared["label_counts"]
-
     pd_results = {
         feature: average_partial_dependence(model, x, class_order, feature)
         for feature in FEATURE_LABELS
@@ -176,6 +250,23 @@ def make_plot(
     plt.close(pd_fig)
     save_scatter_plot(plot_df, "predicted_label", label_order, color_map, SCATTER_OUTPUT_PATH)
     save_scatter_plot(plot_df, "actual_label", label_order, color_map, ACTUAL_SCATTER_OUTPUT_PATH)
+    cv_pred = collect_cv_predictions(
+        prepared["x"],
+        prepared["y"],
+        prepared["cv_splits"],
+        len(class_order),
+        n_estimators=n_estimators,
+        max_depth=max_depth,
+        learning_rate=learning_rate,
+    )
+    save_confusion_matrix_plot(prepared["y"], cv_pred, class_order, CONFUSION_MATRIX_OUTPUT_PATH)
+
+    return (
+        PD_OUTPUT_PATH,
+        SCATTER_OUTPUT_PATH,
+        ACTUAL_SCATTER_OUTPUT_PATH,
+        CONFUSION_MATRIX_OUTPUT_PATH,
+    )
 
 
 if __name__ == "__main__":
