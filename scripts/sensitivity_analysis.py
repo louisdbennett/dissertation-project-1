@@ -8,6 +8,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 PYTHON_BIN = ROOT_DIR / ".venv" / "bin" / "python"
 OUTPUT_DIR = ROOT_DIR / "analysis_outputs" / "snr_classification"
 RESULTS_PATH = OUTPUT_DIR / "coverage_sensitivity.csv"
+PERMANOVA_PATH = OUTPUT_DIR / "projection_cluster_log_permanova.csv"
 COVERAGE_VALUES = [0.3, 0.4, 0.5, 0.6, 0.7]
 
 if __name__ == "__main__":
@@ -32,15 +33,15 @@ if __name__ == "__main__":
         )
 
         n_labels = len(pd.read_csv(OUTPUT_DIR / "summary.csv").columns) - 1
-        result = pd.read_csv(OUTPUT_DIR / "permanova_global.csv").iloc[0]
+        result = pd.read_csv(PERMANOVA_PATH).iloc[0]
         rows.append(
             {
                 "coverage": coverage,
                 "n_labels": n_labels,
-                "pseudo_f": result["pseudo_f"],
+                "pseudo_f": result["test statistic"],
                 "r2": result["r2"],
-                "p_value": result["p_value"],
-                "significant_0_05": result["p_value"] < 0.05,
+                "p_value": result["p-value"],
+                "significant_0_05": result["p-value"] < 0.05,
             }
         )
 
