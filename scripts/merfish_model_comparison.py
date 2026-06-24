@@ -4,20 +4,12 @@ import pandas as pd
 import warnings
 from scipy.linalg import LinAlgWarning
 
-try:
-    from scripts.merfish_utils import (
-        GRID_MODELS,
-        prepare_filtered_data,
-        screen_model_grid,
-    )
-    from scripts.merfish_prediction import run_analysis
-except ModuleNotFoundError:
-    from merfish_utils import (
-        GRID_MODELS,
-        prepare_filtered_data,
-        screen_model_grid,
-    )
-    from merfish_prediction import run_analysis
+from merfish_utils import (
+    GRID_MODELS,
+    prepare_filtered_data,
+    screen_model_grid,
+)
+from merfish_prediction import run_analysis
 
 MODEL_COMPARISON_OUTPUT = Path("analysis_outputs/model_comparison")
 
