@@ -68,7 +68,6 @@ def plot_group_mean_probabilities(group_column: str = DEFAULT_CLUSTER_COLUMN) ->
         ax.set_xlabel("Mean predicted probability")
 
     axes[0].set_ylabel("Supertype")
-    fig.suptitle(f"Mean supertype probabilities by {title_group_label}", y=1.02)
     fig.tight_layout()
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)

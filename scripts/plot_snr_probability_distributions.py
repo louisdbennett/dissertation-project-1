@@ -79,7 +79,6 @@ def plot_probability_distribution(
     ax.set_ylim(0, 1)
     ax.set_ylabel("Predicted probability")
     ax.set_xlabel(AXIS_LABELS.get(group_column, group_column))
-    ax.set_title(f"{format_label(probability_column)} probability by {title_group_label}")
 
     output_path = make_output_path(probability_column)
     output_path.parent.mkdir(parents=True, exist_ok=True)
